@@ -3,7 +3,6 @@ import discord
 import logging
 import logging.handlers
 import asyncio
-from io import BytesIO
 from nbt import nbt
 from discord.ext import commands
 from discord import app_commands
@@ -70,13 +69,10 @@ async def sync(ctx: commands.context.Context):
 )
 async def biomenuke(interaction: discord.Interaction, dimension: str, namespace: str, data_file: discord.Attachment):
 	logging.info(f"Nuking biomes for user {interaction.message.author}")
-	data = await data_file.read()
 	if not os.path.exists("./nuker/export/"):
 		logger.info("Creating nuker directory..")
 		os.makedirs("./nuker/export/")
-	with open("./nuker/export/temp.dat", "wb") as f:
-		logger.info("Writing level.dat to temp file..")
-		f.write(data)
+	await data_file.save(fp="./nuker/export/temp.dat")
 
 	nbtfile = nbt.NBTFile("./nuker/export/temp.dat", "rb")
 	biomes_location = nbtfile["Data"]["WorldGenSettings"]["dimensions"][dimension]["generator"]["biome_source"]["biomes"]
