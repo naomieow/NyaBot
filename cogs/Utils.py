@@ -10,31 +10,37 @@ class Utils(commands.Cog):
     def __init__(self, client: nyabot.NyaBot) -> None:
         self.client = client
 
-    async def cog_load(self):
+    async def cog_load(self) -> None:
         logging.info(f"Cog: {self.__cog_name__} loaded")
     
-    async def cog_unload(self):
+    async def cog_unload(self) -> None:
         logging.info(f"Cog: {self.__cog_name__} unloaded")
 
     @app_commands.command(name="biomenuke", description="Removes biome entires from your level.dat")
     @app_commands.describe(
         dimension="The dimension that the biomes are in",
         namespace="The namespace of the biomes. Usually the mod's name.",
-        data_file="Your level.dat file.",
+        data_file="The supplied level.dat file",
         public="Display result publicly."
     )
-    async def biomenuke(interaction: discord.Interaction, dimension: str, namespace: str, data_file: discord.Attachment, public: bool = True):
-        """/biomenuke [dimension] [namespace] [data_file: level.dat] [public: true|false]
+    async def biomenuke(self, interaction: discord.Interaction, dimension: str, namespace: str, data_file: discord.Attachment, public: bool = True) -> None:
+        """Nukes biomes from a given level.dat file
+
+        Args:
+            dimension (str): The dimension that the biomes are in
+            namespace (str): The namespace of the biomes. Ususallt the mod's name.
+            data_file (discord.Attachment): The supplied level.dat file.
+            public (bool): Display result publicly.
         """
         public = not public
 
         if not data_file.filename.endswith(".dat"):
+            logging.error(f"Invalid .dat file! found {data_file.filename}")
             await interaction.response.send_message("Your attachment is not a valid level.dat file!", ephemeral=True)
             return
         
         await interaction.response.defer(thinking=True, ephemeral=public)
 
-        logging.info(f"Nuking biomes for user {interaction.message.author}")
         await data_file.save(fp="./nuker/export/temp.dat")
 
         nbtfile = nbt.NBTFile("./nuker/export/temp.dat", "rb")
@@ -57,3 +63,6 @@ class Utils(commands.Cog):
             for dimension in dimensions
             if current.replace(" ", "").lower() in dimension.replace(" ", "").lower()
         ]
+
+async def setup(client: nyabot.NyaBot()) -> None:
+    await client.add_cog(Utils(client))
